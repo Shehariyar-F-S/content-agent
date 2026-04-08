@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-validate:
+    name: Syntax check + import validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Syntax check all Python files
+        run: |
+          python -c "
+          import ast, sys, pathlib
+          files = list(pathlib.Path('src').rglob('*.py')) + list(pathlib.Path('tests').rglob('*.py')) + list(pathlib.Path('ui').rglob('*.py'))
+          errors = []
+          for f in files:
+              try:
+                  ast.parse(f.read_text())
+                  print(f'  OK  {f}')
+              except SyntaxError as e:
+                  errors.append(f'  ERR {f}: {e}')
+          if errors:
+              print('\nSyntax errors found:')
+              for e in errors: print(e)
+              sys.exit(1)
+          print(f'\nAll {len(files)} files passed syntax check.')
+          "
+
+      - name: Validate state schema imports cleanly
+        run: |
+          python -c "from src.state import AgentState, EnrichmentData, AnalysisData, SentimentData, GenerationData, EvaluationData; print('State schema OK')"
+
+      - name: Validate graph imports cleanly
+        run: |
+          python -c "
+          import os
+          os.environ.setdefault('TAVILY_API_KEY', 'dummy-for-ci')
+          os.environ.setdefault('OLLAMA_BASE_URL', 'http://localhost:11434')
+          os.environ.setdefault('OLLAMA_MODEL', 'qwen2.5:7b')
+          from src.graph import build_graph
+          graph = build_graph()
+          print('Graph compiled OK')
+          "
+
+      - name: Validate API imports cleanly
+        run: |
+          python -c "
+          import os
+          os.environ.setdefault('TAVILY_API_KEY', 'dummy-for-ci')
+          os.environ.setdefault('OLLAMA_BASE_URL', 'http://localhost:11434')
+          os.environ.setdefault('OLLAMA_MODEL', 'qwen2.5:7b')
+          from src.api import app
+          print('FastAPI app OK')
+          "
