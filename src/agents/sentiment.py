@@ -26,17 +26,19 @@ import logging
 import os
 import time
 
-from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 from langchain_tavily import TavilySearch
 
 from src.state import AgentState, SentimentData
 
 logger = logging.getLogger(__name__)
 
-_model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
-_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+#_model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+#_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
-llm = ChatOllama(model=_model, base_url=_base_url, temperature=0)
+#llm = ChatOllama(model=_model, base_url=_base_url, temperature=0)
+llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
+
 search_tool = TavilySearch(max_results=3)
 
 SENTIMENT_PROMPT = """\

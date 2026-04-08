@@ -7,16 +7,15 @@ on:
     branches: [main]
 
 jobs:
-  lint-and-validate:
-    name: Syntax check + import validation
+
+  test:
+    name: Run tests
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -25,48 +24,52 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Syntax check all Python files
+      - name: Run pytest
+        env:
+          TAVILY_API_KEY: dummy-for-ci
+          OLLAMA_BASE_URL: http://localhost:11434
+          OLLAMA_MODEL: qwen2.5:7b
         run: |
-          python -c "
-          import ast, sys, pathlib
-          files = list(pathlib.Path('src').rglob('*.py')) + list(pathlib.Path('tests').rglob('*.py')) + list(pathlib.Path('ui').rglob('*.py'))
-          errors = []
-          for f in files:
-              try:
-                  ast.parse(f.read_text())
-                  print(f'  OK  {f}')
-              except SyntaxError as e:
-                  errors.append(f'  ERR {f}: {e}')
-          if errors:
-              print('\nSyntax errors found:')
-              for e in errors: print(e)
-              sys.exit(1)
-          print(f'\nAll {len(files)} files passed syntax check.')
-          "
+          pytest tests/test_pipeline.py -v --tb=short
 
-      - name: Validate state schema imports cleanly
-        run: |
-          python -c "from src.state import AgentState, EnrichmentData, AnalysisData, SentimentData, GenerationData, EvaluationData; print('State schema OK')"
+  build-and-push:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
 
-      - name: Validate graph imports cleanly
-        run: |
-          python -c "
-          import os
-          os.environ.setdefault('TAVILY_API_KEY', 'dummy-for-ci')
-          os.environ.setdefault('OLLAMA_BASE_URL', 'http://localhost:11434')
-          os.environ.setdefault('OLLAMA_MODEL', 'qwen2.5:7b')
-          from src.graph import build_graph
-          graph = build_graph()
-          print('Graph compiled OK')
-          "
+    permissions:
+      contents: read
+      packages: write
 
-      - name: Validate API imports cleanly
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Print image URL
         run: |
-          python -c "
-          import os
-          os.environ.setdefault('TAVILY_API_KEY', 'dummy-for-ci')
-          os.environ.setdefault('OLLAMA_BASE_URL', 'http://localhost:11434')
-          os.environ.setdefault('OLLAMA_MODEL', 'qwen2.5:7b')
-          from src.api import app
-          print('FastAPI app OK')
-          "
+          echo "Published: ghcr.io/${{ github.repository }}:latest"

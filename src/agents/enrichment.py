@@ -23,7 +23,7 @@ import logging
 import os
 import time
 
-from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 from langchain_tavily import TavilySearch
 
 from src.state import AgentState, EnrichmentData
@@ -32,10 +32,11 @@ logger = logging.getLogger(__name__)
 
 # Ollama — local LLM, free, no API key needed.
 # Make sure you have run: ollama pull llama3.1
-_model = os.getenv("OLLAMA_MODEL", "llama3.1")
-_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+#_model = os.getenv("OLLAMA_MODEL", "llama3.1")
+#_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
-llm = ChatOllama(model=_model, base_url=_base_url, temperature=0)
+#llm = ChatOllama(model=_model, base_url=_base_url, temperature=0)
+llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
 
 # Tavily — purpose-built for LLM applications, reliable, free tier (1000/month).
 # At 2 searches per pipeline run you get 500 full runs on the free tier.

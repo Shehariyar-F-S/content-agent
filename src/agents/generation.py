@@ -24,16 +24,17 @@ import logging
 import os
 import time
 
-from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 
 from src.state import AgentState, GenerationData
 
 logger = logging.getLogger(__name__)
 
-_model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
-_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+#_model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+#_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
-llm = ChatOllama(model=_model, base_url=_base_url, temperature=0.3)
+#llm = ChatOllama(model=_model, base_url=_base_url, temperature=0.3)
+llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0.3)
 # Note: temperature=0.3 here (not 0) — generation benefits from slight creativity
 # while still being mostly deterministic. Pure temperature=0 produces flat copy.
 

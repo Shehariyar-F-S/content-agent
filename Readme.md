@@ -1,6 +1,7 @@
 # 🎬 Content Intelligence Agent
 
 <p align="center">
+  <img src="https://github.com/Shehariyar-F-S/content-agent/actions/workflows/ci.yml/badge.svg" alt="CI" />
   <img src="https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/LangGraph-0.2-purple?logo=chainlink&logoColor=white" />
   <img src="https://img.shields.io/badge/Ollama-Qwen2.5_7B-green" />
@@ -130,6 +131,11 @@ streamlit run ui/app.py
 ## Docker
 
 ```bash
+# Option 1 — pull pre-built image from GHCR (fastest)
+docker pull ghcr.io/shehariyar-f-s/content-agent:latest
+docker compose up
+
+# Option 2 — build locally
 docker compose up --build
 docker compose exec ollama ollama pull qwen2.5:7b
 ```
