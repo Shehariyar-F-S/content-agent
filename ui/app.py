@@ -13,7 +13,7 @@ Make sure the FastAPI backend is running first:
 import httpx
 import streamlit as st
 
-API_URL = "https://content-agent-production-b165.up.railway.app"
+API_URL = "http://localhost:8000"
 
 st.set_page_config(
     page_title="Content Intelligence Agent",
@@ -39,6 +39,7 @@ with col1:
     title = st.text_input(
         "Show title",
         placeholder="e.g. Turkish for Beginners, The Masked Singer Germany",
+        key="title_input",
     )
     synopsis = st.text_area(
         "Synopsis (optional — helps with accuracy)",
@@ -56,7 +57,8 @@ with col2:
         "Babylon Berlin",
     ]:
         if st.button(example, use_container_width=True):
-            title = example
+            st.session_state["title_input"] = example
+            st.rerun()
 
 run = st.button("Run pipeline", type="primary", disabled=not title)
 
@@ -130,7 +132,7 @@ if run and title:
         if e:
             st.caption(f"Confidence: {e['confidence']:.0%} · {e['snippets_count']} web snippets")
             for key, value in e["facts"].items():
-                if value and value not in ["unknown", [], ["unknown"], "[]"]:
+                if value and value != "unknown" and value != [] and value != "[]":
                     st.markdown(f"**{key.replace('_', ' ').title()}:** {value}")
         else:
             st.warning("Enrichment data unavailable.")
