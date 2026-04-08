@@ -29,6 +29,7 @@ jobs:
           TAVILY_API_KEY: dummy-for-ci
           OLLAMA_BASE_URL: http://localhost:11434
           OLLAMA_MODEL: qwen2.5:7b
+          GROQ_API_KEY: dummy-for-ci
         run: |
           pytest tests/test_pipeline.py -v --tb=short
 
