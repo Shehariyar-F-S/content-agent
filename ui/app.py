@@ -13,7 +13,7 @@ Make sure the FastAPI backend is running first:
 import httpx
 import streamlit as st
 
-API_URL = "http://localhost:8000"
+API_URL = "https://content-agent-production-b165.up.railway.app/"
 
 st.set_page_config(
     page_title="Content Intelligence Agent",
