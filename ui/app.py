@@ -39,7 +39,7 @@ with col1:
     title = st.text_input(
         "Show title",
         placeholder="e.g. Turkish for Beginners, The Masked Singer Germany",
-        key="title_input",
+        value=st.session_state.get("prefill_title", ""),
     )
     synopsis = st.text_area(
         "Synopsis (optional — helps with accuracy)",
@@ -57,7 +57,7 @@ with col2:
         "Babylon Berlin",
     ]:
         if st.button(example, use_container_width=True):
-            st.session_state["title_input"] = example
+            st.session_state["prefill_title"] = example
             st.rerun()
 
 run = st.button("Run pipeline", type="primary", disabled=not title)
