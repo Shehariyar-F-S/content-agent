@@ -163,7 +163,8 @@ def evaluation_node(state: AgentState) -> AgentState:
 
     # Estimate token usage (rough heuristic — replace with LangSmith data in prod)
     # Average prompt is ~400 tokens, average response is ~200 tokens, 3 LLM calls
-    estimated_tokens = 3 * (400 + 200)
+    completed = len(state.get("completed_agents", []))
+    estimated_tokens = completed * (400 + 200)
 
     elapsed = round(time.time() - start_time, 2)
     logger.info(

@@ -196,4 +196,4 @@ if run and title:
             st.warning("Generation data unavailable.")
 
 st.divider()
-st.caption("© 2026 Shehariyar F.S. — Content Intelligence Agent")
+st.caption("© 2026 Shehariyar Firdous Shaikh — Content Intelligence Agent")

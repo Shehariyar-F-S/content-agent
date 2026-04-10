@@ -4,7 +4,7 @@
   <img src="https://github.com/Shehariyar-F-S/content-agent/actions/workflows/ci.yml/badge.svg" alt="CI" />
   <img src="https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/LangGraph-0.2-purple?logo=chainlink&logoColor=white" />
-  <img src="https://img.shields.io/badge/Ollama-Qwen2.5_7B-green" />
+  <img src="https://img.shields.io/badge/Groq-Llama_3.1_8B-orange" />
   <img src="https://img.shields.io/badge/FastAPI-0.115-teal?logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/Streamlit-1.40-red?logo=streamlit&logoColor=white" />
   <img src="https://img.shields.io/badge/Docker-ready-blue?logo=docker&logoColor=white" />
@@ -13,7 +13,7 @@
 <p align="center">
   A production-grade multi-agent AI pipeline that automates metadata generation
   for streaming content — replacing hours of manual editorial work with a
-  reliable, auditable system costing $0.004 per run.
+  reliable, auditable system.
 </p>
 
 ---
@@ -41,18 +41,18 @@ Input title
 └─────────────┘                  └──────────────────────────────────────┘
      │
      ▼
-┌─────────────┐     Groq API    ┌──────────────────────────────────────┐
-│  Analysis   │────(Llama 3.1 8B) ────│  Tags: genre · mood · audience       │
+┌─────────────┐     Groq API     ┌──────────────────────────────────────┐
+│  Analysis   │──── Llama 3.1 ───│  Tags: genre · mood · audience       │
 └─────────────┘                  └──────────────────────────────────────┘
      │
      ▼
 ┌─────────────┐     Tavily       ┌──────────────────────────────────────┐
-│  Sentiment  │──── web search ──│  Score: 75/100 · positives · issues  │
+│  Sentiment  │──── web search ──│  Score: 90/100 · positives · issues  │
 └─────────────┘                  └──────────────────────────────────────┘
      │
      ▼
 ┌─────────────┐     Groq API     ┌──────────────────────────────────────┐
-│ Generation  │────(Llama 3.1 8B)────│  SEO title · meta desc · social copy │
+│ Generation  │──── Llama 3.1 ───│  SEO title · meta desc · social copy │
 └─────────────┘                  └──────────────────────────────────────┘
      │
      ▼
@@ -74,23 +74,25 @@ Structured JSON output with per-agent confidence scores
 
 ## Live demo output
 
-Input: `"Turkish for Beginners"`
+Input: `"Stranger Things"`
 
 ```
-Overall confidence    80%
+Overall confidence    86%
 Hallucination flags   0
-Low confidence agents enrichment (74%), sentiment (68%)
+Low confidence agents 0
 
-Genre tags     Comedy · Drama
-Mood tags      Educational · Lighthearted
-Audience       Beginners · Families
+Genre tags     Science Fiction · Fantasy · Horror · Mystery
+Mood tags      Suspenseful · Thrilling · Nostalgic · Emotional
+Audience       Teen · Family · Young Adult · General
+Warnings       Violence · Mild Language · Mild Horror
 
-Sentiment      75/100 — Generally positive. Engaging narrative and
-               relatable characters. Decline in later seasons noted.
+Sentiment      90/100 — Audiences are overwhelmingly positive, praising
+               nostalgic 1980s references, strong character development,
+               and atmospheric setting.
 
-SEO title      Turkish for Beginners: Comedy, Drama & Learning Made Easy
-Meta desc      Join us on a lighthearted journey to learn Turkish with
-               our comedy-drama series! Perfect for families. (122 chars)
+SEO title      Stranger Things: A Thrilling Sci-Fi Adventure
+Meta desc      Join the Hawkins gang on a suspenseful journey through
+               science fiction, fantasy, and horror. (120 chars)
 ```
 
 ## Tech stack
@@ -98,23 +100,25 @@ Meta desc      Join us on a lighthearted journey to learn Turkish with
 | Layer | Tool | Why |
 |---|---|---|
 | Agent framework | LangGraph 0.2 | Typed shared state, proper state machine |
-| LLM | Ollama + Qwen 2.5 7B | Local, free, unlimited, swap-ready |
+| LLM | Groq API — Llama 3.1 8B | Free tier, fast inference, no local setup |
 | Web search | Tavily | LLM-optimised snippets, reliable free tier |
 | API | FastAPI | Pydantic models, auto-generated Swagger docs |
 | Frontend | Streamlit | Demo-ready UI |
 | Observability | LangSmith | Tracing + confidence (optional) |
-| Deployment | Docker + Compose | One command to run everything |
+| Deployment | Docker + Railway | One command to run, public URL |
 
 ## Quick start
 
 ```bash
-# Get free Groq API key at console.groq.com
-# Add GROQ_API_KEY to .env
+# 1. Get free API keys
+#    Groq  → console.groq.com   (LLM inference)
+#    Tavily → tavily.com         (web search)
 
 # 2. Set up
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # add TAVILY_API_KEY from tavily.com
+cp .env.example .env
+# Add GROQ_API_KEY and TAVILY_API_KEY to .env
 
 # 3. Test the pipeline
 python -m tests.test_enrichment
@@ -137,7 +141,6 @@ docker compose up
 
 # Option 2 — build locally
 docker compose up --build
-docker compose exec ollama ollama pull qwen2.5:7b
 ```
 
 UI at `localhost:8501` · API docs at `localhost:8000/docs`
@@ -156,6 +159,9 @@ UI at `localhost:8501` · API docs at `localhost:8000/docs`
 │       ├── sentiment.py  ← audience sentiment
 │       └── generation.py ← SEO + social copy
 ├── ui/app.py             ← Streamlit frontend
+├── tests/
+│   ├── conftest.py       ← pytest env setup
+│   └── test_pipeline.py  ← 23 tests with mocked agents
 ├── docker-compose.yml
 └── requirements.txt
 ```
@@ -165,18 +171,19 @@ UI at `localhost:8501` · API docs at `localhost:8000/docs`
 ```bash
 curl -X POST http://localhost:8000/analyse \
   -H "Content-Type: application/json" \
-  -d '{"title": "Dark", "synopsis": "German sci-fi thriller."}'
+  -d '{"title": "Stranger Things", "synopsis": "Sci-fi horror set in 1980s Indiana."}'
 ```
 
-Full docs at `http://localhost:8000/docs`.
+Full interactive docs at `http://localhost:8000/docs`.
 
 ## Cost
 
 | Tool | Cost |
 |---|---|
-| Groq API (Llama 3.1 8B) | Free tier — 14,400 req/day |
-| Tavily | Free — 1000 searches/month (~200 runs) |
-| LangSmith | Free tier — optional |
+| Groq API — Llama 3.1 8B | Free — 14,400 requests/day |
+| Tavily | Free — 1000 searches/month (~130 full runs) |
+| LangSmith | Free tier — optional observability |
+| Railway | Free tier — public deployment |
 
 ## Adaptability
 
@@ -187,4 +194,5 @@ Same architecture, different domain:
 
 ---
 
-© 2026 Shehariyar Firdous.Shaikh. · Content Intelligence Agent · Built as a portfolio project demonstrating production-grade multi-agent AI engineering.
+© 2026 Shehariyar Firdous Shaikh · Content Intelligence Agent  
+Built as a portfolio project demonstrating production-grade multi-agent AI engineering.
