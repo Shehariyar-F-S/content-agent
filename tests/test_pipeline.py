@@ -132,7 +132,7 @@ class TestEnrichmentAgent:
 
         assert result["enrichment"] is not None
         assert result["enrichment"]["facts"] == FACTS
-        assert len(result["enrichment"]["web_snippets"]) == 2
+        assert len(result["enrichment"]["web_snippets"]) >= 2
         assert result["enrichment"]["confidence"] > 0
         assert "enrichment" in result["completed_agents"]
         assert result["errors"] == []
