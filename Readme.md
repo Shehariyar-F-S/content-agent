@@ -41,8 +41,8 @@ Input title
 └─────────────┘                  └──────────────────────────────────────┘
      │
      ▼
-┌─────────────┐     Qwen 2.5     ┌──────────────────────────────────────┐
-│  Analysis   │──── 7B local ────│  Tags: genre · mood · audience       │
+┌─────────────┐     Groq API    ┌──────────────────────────────────────┐
+│  Analysis   │────(Llama 3.1 8B) ────│  Tags: genre · mood · audience       │
 └─────────────┘                  └──────────────────────────────────────┘
      │
      ▼
@@ -51,8 +51,8 @@ Input title
 └─────────────┘                  └──────────────────────────────────────┘
      │
      ▼
-┌─────────────┐     Qwen 2.5     ┌──────────────────────────────────────┐
-│ Generation  │──── 7B local ────│  SEO title · meta desc · social copy │
+┌─────────────┐     Groq API     ┌──────────────────────────────────────┐
+│ Generation  │────(Llama 3.1 8B)────│  SEO title · meta desc · social copy │
 └─────────────┘                  └──────────────────────────────────────┘
      │
      ▼
@@ -108,8 +108,8 @@ Meta desc      Join us on a lighthearted journey to learn Turkish with
 ## Quick start
 
 ```bash
-# 1. Pull the LLM (one time)
-ollama pull qwen2.5:7b
+# Get free Groq API key at console.groq.com
+# Add GROQ_API_KEY to .env
 
 # 2. Set up
 python -m venv venv && source venv/bin/activate
@@ -174,7 +174,7 @@ Full docs at `http://localhost:8000/docs`.
 
 | Tool | Cost |
 |---|---|
-| Ollama + Qwen 2.5 7B | Free — local |
+| Groq API (Llama 3.1 8B) | Free tier — 14,400 req/day |
 | Tavily | Free — 1000 searches/month (~200 runs) |
 | LangSmith | Free tier — optional |
 
@@ -187,4 +187,4 @@ Same architecture, different domain:
 
 ---
 
-*Built as a portfolio project by an AI Master's student (THWS Würzburg) with 2 years enterprise development experience at IBM.*
+© 2026 Shehariyar Firdous.Shaikh. · Content Intelligence Agent · Built as a portfolio project demonstrating production-grade multi-agent AI engineering.

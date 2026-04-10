@@ -133,7 +133,7 @@ if run and title:
         if e:
             st.caption(f"Confidence: {e['confidence']:.0%} · {e['snippets_count']} web snippets")
             for key, value in e["facts"].items():
-                if value and value != "unknown" and value != [] and value != "[]":
+                if value and value not in ["unknown", [], ["unknown"], "[]"]:
                     st.markdown(f"**{key.replace('_', ' ').title()}:** {value}")
         else:
             st.warning("Enrichment data unavailable.")
@@ -194,3 +194,6 @@ if run and title:
             st.caption(f"{len(g['twitter_post'])} / 280 chars")
         else:
             st.warning("Generation data unavailable.")
+
+st.divider()
+st.caption("© 2026 Shehariyar F.S. — Content Intelligence Agent")

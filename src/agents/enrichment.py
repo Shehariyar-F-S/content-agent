@@ -58,7 +58,7 @@ Do not guess or infer — only use what is explicitly stated in the results.
 Return ONLY a valid JSON object with these exact keys:
 {{
   "network_or_platform": "...",
-  "seasons_count": "...",
+  "seasons_count": "total number of seasons as a single integer, not episode count",
   "average_viewers": "...",
   "format_origin": "...",
   "related_shows": ["...", "..."],
@@ -86,9 +86,15 @@ def enrichment_agent(state: AgentState) -> AgentState:
 
     try:
         # Step 1: search the web for real facts
-        query = f"{title} TV show streaming platform viewers seasons format"
-        raw_results = search_tool.invoke({"query": query})
-        snippets = [r["content"] for r in raw_results["results"] if "content" in r]
+        # First search — general facts
+        query1 = f"{title} TV show streaming platform seasons cast"
+        raw1 = search_tool.invoke({"query": query1})
+        snippets = [r["content"] for r in raw1.get("results", []) if "content" in r]
+
+        # Second search — viewership and ratings
+        query2 = f"{title} TV series viewership ratings premiere year network"
+        raw2 = search_tool.invoke({"query": query2})
+        snippets += [r["content"] for r in raw2.get("results", []) if "content" in r]
 
         if not snippets:
             raise ValueError("Tavily returned no results — check your API key.")
