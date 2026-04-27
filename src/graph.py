@@ -17,6 +17,16 @@ Later you can make edges conditional — e.g. skip sentiment if
 enrichment failed, or run analysis and sentiment in parallel.
 """
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+# Initialise LangSmith tracing
+if os.getenv("LANGCHAIN_API_KEY"):
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+    os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGCHAIN_PROJECT", "content-agent")
+
 import uuid
 import logging
 from typing import Optional
