@@ -9,6 +9,7 @@ Wraps the LangGraph pipeline in a REST API with two endpoints:
 Auto-generated docs available at http://localhost:8000/docs when running.
 """
 
+import os
 import logging
 import time
 from typing import Optional
