@@ -9,6 +9,7 @@ Wraps the LangGraph pipeline in a REST API with two endpoints:
 Auto-generated docs available at http://localhost:8000/docs when running.
 """
 
+import re
 import os
 import logging
 import time
@@ -24,8 +25,8 @@ if os.getenv("LANGCHAIN_API_KEY"):
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import re
+from pydantic import BaseModel, field_validator
+
 
 from src.graph import run_pipeline
 
