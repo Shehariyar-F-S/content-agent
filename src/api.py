@@ -16,6 +16,10 @@ from typing import Optional
 from dotenv import load_dotenv
 load_dotenv()
 
+# LangSmith tracing — enable if API key is present
+if os.getenv("LANGCHAIN_API_KEY"):
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
