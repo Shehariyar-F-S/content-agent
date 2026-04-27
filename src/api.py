@@ -25,6 +25,7 @@ if os.getenv("LANGCHAIN_API_KEY"):
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import re
 
 from src.graph import run_pipeline
 
@@ -58,6 +59,18 @@ class AnalyseRequest(BaseModel):
     title: str
     synopsis: Optional[str] = None
 
+    @field_validator("title")
+    @classmethod
+    def title_must_be_valid(cls, v):
+        v = v.strip()
+        if len(v) < 2:
+            raise ValueError("Title must be at least 2 characters.")
+        if len(v) > 200:
+            raise ValueError("Title must be under 200 characters.")
+        if not re.search(r'[a-zA-Z]', v):
+            raise ValueError("Title must contain at least one letter.")
+        return v
+    
     model_config = {
         "json_schema_extra": {
             "example": {

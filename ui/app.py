@@ -12,6 +12,7 @@ Make sure the FastAPI backend is running first:
 
 import httpx
 import streamlit as st
+import re
 
 #API_URL = "http://localhost:8000"
 API_URL = "https://content-agent-production-b165.up.railway.app"
@@ -61,7 +62,14 @@ with col2:
             st.session_state["prefill_title"] = example
             st.rerun()
 
+def is_valid_title(title: str) -> bool:
+    return len(title.strip()) >= 2 and bool(re.search(r'[a-zA-Z]', title))
+
 run = st.button("Run pipeline", type="primary", disabled=not title)
+
+if title and not is_valid_title(title):
+    st.warning("Please enter a valid show title.")
+
 
 # ---------------------------------------------------------------------------
 # Pipeline execution
@@ -113,7 +121,13 @@ if run and title:
 
         if ev["hallucination_flags"]:
             for flag in ev["hallucination_flags"]:
-                st.warning(f"Hallucination flag: {flag}")
+                if "recognisable title" in flag:
+                    st.error(
+                        "Could not find reliable information for this title. "
+                        "Please check spelling or try a different show name."
+                    )
+                else:
+                    st.warning(f"Hallucination flag: {flag}")
 
         if ev["low_confidence_agents"]:
             st.info(f"Low confidence: {', '.join(ev['low_confidence_agents'])}")

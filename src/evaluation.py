@@ -9,7 +9,8 @@ WHAT IT DOES:
     2. Detects potential hallucinations by cross-checking generation
        output against enrichment facts
     3. Identifies which agents ran with low confidence
-    4. Counts total tokens (estimated) and measures total latency
+    4. Flags likely invalid or unrecognisable input titles
+    5. Counts total tokens (estimated) and measures total latency
 
 WHY THIS IS THE MOST IMPORTANT NODE:
     This is what separates a student project from a production system.
@@ -34,6 +35,7 @@ logger = logging.getLogger(__name__)
 # Confidence thresholds
 LOW_CONFIDENCE_THRESHOLD = 0.75
 HALLUCINATION_SCORE_THRESHOLD = 0.70
+INVALID_INPUT_CONFIDENCE_THRESHOLD = 0.60
 
 
 def _check_hallucinations(state: AgentState) -> list[str]:
@@ -63,7 +65,6 @@ def _check_hallucinations(state: AgentState) -> list[str]:
     # Check: did generation mention a year that contradicts enrichment?
     first_aired = str(facts.get("first_aired", "")).strip()
     if first_aired and first_aired != "unknown" and len(first_aired) == 4:
-        # If copy mentions a year and it's not the correct one
         import re
         years_in_copy = re.findall(r"\b(19|20)\d{2}\b", all_copy)
         for year in years_in_copy:
@@ -89,13 +90,44 @@ def _check_hallucinations(state: AgentState) -> list[str]:
     return flags
 
 
+def _check_invalid_input(state: AgentState) -> list[str]:
+    """
+    Detect likely invalid or unrecognisable input titles.
+
+    Strategy: use enrichment confidence as a proxy for input validity.
+    If Tavily finds no meaningful results, enrichment confidence will be
+    very low or enrichment will have failed entirely — both signal that
+    the input is not a recognisable title.
+
+    This approach handles the hard case where gibberish like 'dajfsbfdshbf'
+    passes letter-based validation but is still meaningless. Rather than
+    trying to distinguish valid from invalid titles with rules (which would
+    reject real shows like 'Beef' or 'Fleabag'), we let the pipeline's own
+    evidence signal the problem.
+    """
+    flags = []
+    enrichment = state.get("enrichment")
+
+    if not enrichment:
+        flags.append(
+            "Enrichment failed completely — input may not be a recognisable title."
+        )
+    elif enrichment.get("confidence", 0) < INVALID_INPUT_CONFIDENCE_THRESHOLD:
+        flags.append(
+            "Very low enrichment confidence — input may not be a recognisable "
+            "title. Please check spelling or try a different show name."
+        )
+
+    return flags
+
+
 def _identify_low_confidence_agents(state: AgentState) -> list[str]:
     """Return names of agents whose confidence fell below the threshold."""
     low = []
     agent_map = {
         "enrichment": state.get("enrichment"),
-        "analysis": state.get("analysis"),
-        "sentiment": state.get("sentiment"),
+        "analysis":   state.get("analysis"),
+        "sentiment":  state.get("sentiment"),
         "generation": state.get("generation"),
     }
     for name, data in agent_map.items():
@@ -117,14 +149,14 @@ def _overall_confidence(state: AgentState) -> float:
     """
     weights = {
         "enrichment": 0.30,
-        "analysis": 0.25,
-        "sentiment": 0.20,
+        "analysis":   0.25,
+        "sentiment":  0.20,
         "generation": 0.25,
     }
     agent_map = {
         "enrichment": state.get("enrichment"),
-        "analysis": state.get("analysis"),
-        "sentiment": state.get("sentiment"),
+        "analysis":   state.get("analysis"),
+        "sentiment":  state.get("sentiment"),
         "generation": state.get("generation"),
     }
 
@@ -149,12 +181,17 @@ def evaluation_node(state: AgentState) -> AgentState:
     logger.info("[Evaluation] Starting pipeline evaluation.")
 
     hallucination_flags = _check_hallucinations(state)
+    invalid_input_flags  = _check_invalid_input(state)
     low_confidence_agents = _identify_low_confidence_agents(state)
     overall = _overall_confidence(state)
 
-    if hallucination_flags:
-        for flag in hallucination_flags:
-            logger.warning(f"[Evaluation] HALLUCINATION FLAG: {flag}")
+    # Merge invalid input flags into hallucination flags so they
+    # surface in the same place in the UI and API response
+    all_flags = hallucination_flags + invalid_input_flags
+
+    if all_flags:
+        for flag in all_flags:
+            logger.warning(f"[Evaluation] FLAG: {flag}")
     else:
         logger.info("[Evaluation] No hallucination flags detected.")
 
@@ -162,7 +199,7 @@ def evaluation_node(state: AgentState) -> AgentState:
         logger.warning(f"[Evaluation] Low confidence agents: {low_confidence_agents}")
 
     # Estimate token usage (rough heuristic — replace with LangSmith data in prod)
-    # Average prompt is ~400 tokens, average response is ~200 tokens, 3 LLM calls
+    # Average prompt ~400 tokens, average response ~200 tokens per LLM agent
     completed = len(state.get("completed_agents", []))
     estimated_tokens = completed * (400 + 200)
 
@@ -170,14 +207,14 @@ def evaluation_node(state: AgentState) -> AgentState:
     logger.info(
         f"[Evaluation] Done in {elapsed}s. "
         f"Overall confidence: {overall:.0%}. "
-        f"Flags: {len(hallucination_flags)}."
+        f"Flags: {len(all_flags)}."
     )
 
     evaluation_data: EvaluationData = {
-        "overall_confidence": overall,
-        "hallucination_flags": hallucination_flags,
+        "overall_confidence":   overall,
+        "hallucination_flags":  all_flags,
         "low_confidence_agents": low_confidence_agents,
-        "total_tokens_used": estimated_tokens,
+        "total_tokens_used":    estimated_tokens,
         "total_latency_seconds": elapsed,
     }
 
