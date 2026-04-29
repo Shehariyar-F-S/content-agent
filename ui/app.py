@@ -197,10 +197,10 @@ if run and title:
             st.markdown(f"**Meta description** ({len(g['meta_description'])} chars)")
             st.code(g["meta_description"], language=None)
             st.markdown("**Instagram post**")
-            st.text_area("", g["instagram_post"], height=100, label_visibility="collapsed")
+            st.text_area("Instagram post", g["instagram_post"], height=100, label_visibility="collapsed")
             st.markdown("**Twitter / X post**")
             st.text_area(
-                "",
+                "Twitter post",
                 g["twitter_post"],
                 height=80,
                 label_visibility="collapsed",
