@@ -11,6 +11,18 @@
 </p>
 
 <p align="center">
+  <a href="https://daring-curiosity-production-e21f.up.railway.app/">
+    <img src="https://img.shields.io/badge/Live_Demo-Railway-7B2FBE?logo=railway&logoColor=white" />
+  </a>
+  <a href="https://content-agent-production-b165.up.railway.app/docs">
+    <img src="https://img.shields.io/badge/API_Docs-Swagger-49cc90?logo=fastapi&logoColor=white" />
+  </a>
+  <a href="https://github.com/Shehariyar-F-S/content-agent/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow" />
+  </a>
+</p>
+
+<p align="center">
   A production-grade multi-agent AI pipeline that automates metadata generation
   for streaming content — replacing hours of manual editorial work with a
   reliable, auditable system.
@@ -70,7 +82,8 @@ Structured JSON output with per-agent confidence scores
 - **Graceful degradation** — if any agent fails, the pipeline logs to `state["errors"]` and continues. Always reaches evaluation.
 - **Confidence scoring** — each agent returns a confidence score. Evaluation aggregates into an overall pipeline score.
 - **Hallucination detection** — generation copy is cross-checked against enrichment facts. Contradictions are flagged.
-- **Fully observable** — LangSmith tracing captures every LLM call, input, output, and latency.
+- **Invalid input detection** — unrecognisable titles are caught via enrichment confidence threshold, not brittle regex rules.
+- **LangSmith tracing** — every LLM call captured with real token counts, latency per agent, and full prompt audit trail.
 
 ## Live demo output
 
@@ -93,6 +106,10 @@ Sentiment      90/100 — Audiences are overwhelmingly positive, praising
 SEO title      Stranger Things: A Thrilling Sci-Fi Adventure
 Meta desc      Join the Hawkins gang on a suspenseful journey through
                science fiction, fantasy, and horror. (120 chars)
+
+Pipeline       4.39s total · 2,781 tokens
+Token split    Enrichment 1,500 · Generation 504 · Sentiment 416 · Analysis 361
+Bottleneck     70% of pipeline time is Tavily network I/O — not LLM inference
 ```
 
 ## Tech stack
@@ -104,15 +121,15 @@ Meta desc      Join the Hawkins gang on a suspenseful journey through
 | Web search | Tavily | LLM-optimised snippets, reliable free tier |
 | API | FastAPI | Pydantic models, auto-generated Swagger docs |
 | Frontend | Streamlit | Demo-ready UI |
-| Observability | LangSmith | Tracing + confidence (optional) |
+| Observability | LangSmith | 5,000 traces/month free — real token counts, full dashboard |
 | Deployment | Docker + Railway | One command to run, public URL |
 
 ## Quick start
 
 ```bash
 # 1. Get free API keys
-#    Groq  → console.groq.com   (LLM inference)
-#    Tavily → tavily.com         (web search)
+#    Groq   → console.groq.com   (LLM inference)
+#    Tavily → tavily.com          (web search)
 
 # 2. Set up
 python -m venv venv && source venv/bin/activate
@@ -145,6 +162,20 @@ docker compose up --build
 
 UI at `localhost:8501` · API docs at `localhost:8000/docs`
 
+## Tests
+
+```bash
+pytest tests/test_pipeline.py -v
+# 23 passed in 0.31s
+```
+
+All agents are mocked — no real API calls during testing. Tavily and Groq
+are replaced with controlled fake responses so tests run in CI without
+API keys and complete in under 1 second.
+
+Two-job CI pipeline: **tests gate Docker image publish**.
+Broken code cannot reach the live demo.
+
 ## Project structure
 
 ```
@@ -154,14 +185,19 @@ UI at `localhost:8501` · API docs at `localhost:8000/docs`
 │   ├── evaluation.py     ← confidence scoring + hallucination detection
 │   ├── api.py            ← FastAPI backend
 │   └── agents/
-│       ├── enrichment.py ← Tavily web search
+│       ├── enrichment.py ← Tavily web search + fact extraction
 │       ├── analysis.py   ← content classification
-│       ├── sentiment.py  ← audience sentiment
-│       └── generation.py ← SEO + social copy
+│       ├── sentiment.py  ← audience sentiment analysis
+│       └── generation.py ← SEO + social copy generation
 ├── ui/app.py             ← Streamlit frontend
 ├── tests/
-│   ├── conftest.py       ← pytest env setup
+│   ├── conftest.py       ← pytest env setup (dummy API keys for CI)
 │   └── test_pipeline.py  ← 23 tests with mocked agents
+├── .github/workflows/
+│   ├── ci.yml            ← two-job pipeline: test → build & push
+│   └── publish.yml       ← GHCR image publish
+├── Dockerfile            ← API container
+├── Dockerfile.ui         ← UI container
 ├── docker-compose.yml
 └── requirements.txt
 ```
@@ -182,8 +218,8 @@ Full interactive docs at `http://localhost:8000/docs`.
 |---|---|
 | Groq API — Llama 3.1 8B | Free — 14,400 requests/day |
 | Tavily | Free — 1000 searches/month (~130 full runs) |
-| LangSmith | Free tier — optional observability |
-| Railway | Free tier — public deployment |
+| LangSmith | Free — 5,000 traces/month, full dashboard |
+| Railway | Free — $5 credit/month renews automatically |
 
 ## Adaptability
 
@@ -191,8 +227,9 @@ Same architecture, different domain:
 - **Customer service** — swap content for tickets, generation for response drafts
 - **Medical documents** — swap shows for clinical reports, tags for ICD codes
 - **Legal** — swap sentiment for risk scoring, generation for clause summaries
+- **Industrial AI** — swap enrichment for sensor data ingestion, evaluation for drift detection
 
 ---
 
-© 2026 Shehariyar Firdous Shaikh · Content Intelligence Agent  
+© 2026 [Shehariyar Firdous Shaikh](https://linkedin.com/in/sher-shaikh) · Content Intelligence Agent  
 Built as a portfolio project demonstrating production-grade multi-agent AI engineering.
