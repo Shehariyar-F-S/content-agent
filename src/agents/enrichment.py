@@ -40,7 +40,7 @@ llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
 
 # Tavily — purpose-built for LLM applications, reliable, free tier (1000/month).
 # At 2 searches per pipeline run you get 500 full runs on the free tier.
-search_tool = TavilySearch(max_results=4)
+search_tool = TavilySearch(max_results=2)
 
 EXTRACTION_PROMPT = """\
 You are a fact extraction agent. Your only job is to read web search results
