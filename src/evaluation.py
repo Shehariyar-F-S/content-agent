@@ -28,7 +28,30 @@ OUTPUT:
 import logging
 import time
 
+from src import state
 from src.state import AgentState, EvaluationData
+
+# LangSmith real token tracking
+try:
+    from langsmith import Client as LangSmithClient
+    _langsmith_client = LangSmithClient()
+    _langsmith_available = True
+except Exception:
+    _langsmith_available = False
+
+def _get_real_tokens(run_id: str) -> int:
+    """
+    Fetch real token count from LangSmith for this run.
+    Falls back to 0 if LangSmith is unavailable or the run
+    hasn't been flushed yet.
+    """
+    if not _langsmith_available:
+        return 0
+    try:
+        run = _langsmith_client.read_run(run_id)
+        return run.total_tokens or 0
+    except Exception:
+        return 0
 
 logger = logging.getLogger(__name__)
 
@@ -200,8 +223,14 @@ def evaluation_node(state: AgentState) -> AgentState:
 
     # Estimate token usage (rough heuristic — replace with LangSmith data in prod)
     # Average prompt ~400 tokens, average response ~200 tokens per LLM agent
+    # completed = len(state.get("completed_agents", []))
+    # estimated_tokens = completed * (400 + 200)
+
+    # Real token count from LangSmith — falls back to heuristic if unavailable
     completed = len(state.get("completed_agents", []))
-    estimated_tokens = completed * (400 + 200)
+    real_tokens = _get_real_tokens(state.get("run_id", ""))
+    estimated_tokens = real_tokens if real_tokens > 0 else completed * 600
+
 
     elapsed = round(time.time() - start_time, 2)
     logger.info(
