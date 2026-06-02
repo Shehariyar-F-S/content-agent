@@ -117,7 +117,7 @@ class EvaluationResponse(BaseModel):
     overall_confidence: float
     hallucination_flags: list[str]
     low_confidence_agents: list[str]
-    total_tokens_used: int
+    total_tokens_used: Optional[int] = None
 
 
 class AnalyseResponse(BaseModel):
