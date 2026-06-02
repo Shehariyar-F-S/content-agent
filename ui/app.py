@@ -121,8 +121,8 @@ if run and title:
         m1.metric("Overall confidence", f"{ev['overall_confidence']:.0%}")
         m2.metric("Hallucination flags", len(ev["hallucination_flags"]))
         m3.metric("Low confidence agents", len(ev["low_confidence_agents"]))
-        m4.metric("Est. tokens used", ev["total_tokens_used"])
-
+        token_display = ev["total_tokens_used"] if ev["total_tokens_used"] else "—"
+        m4.metric("Tokens used", token_display)
         if ev["hallucination_flags"]:
             for flag in ev["hallucination_flags"]:
                 if "recognisable title" in flag:

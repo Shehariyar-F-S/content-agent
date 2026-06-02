@@ -235,9 +235,9 @@ def evaluation_node(state: AgentState) -> AgentState:
     # estimated_tokens = completed * (400 + 200)
 
     # Real token count from LangSmith — falls back to heuristic if unavailable
-    completed = len(state.get("completed_agents", []))
+    #completed = len(state.get("completed_agents", []))
     real_tokens = _get_real_tokens(state.get("run_id", ""))
-    estimated_tokens = real_tokens if real_tokens > 0 else completed * 600
+    estimated_tokens = real_tokens if real_tokens > 0 else None
 
 
     elapsed = round(time.time() - start_time, 2)
