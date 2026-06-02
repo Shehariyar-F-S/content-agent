@@ -41,15 +41,23 @@ except Exception:
 
 def _get_real_tokens(run_id: str) -> int:
     """
-    Fetch real token count from LangSmith for this run.
-    Falls back to 0 if LangSmith is unavailable or the run
-    hasn't been flushed yet.
+    Fetch real token count from LangSmith.
+    Queries the most recent run in the project rather than
+    by ID, since LangSmith uses its own internal run IDs.
     """
     if not _langsmith_available:
         return 0
     try:
-        run = _langsmith_client.read_run(run_id)
-        return run.total_tokens or 0
+        import os
+        project = os.getenv("LANGCHAIN_PROJECT", "content-agent")
+        runs = list(_langsmith_client.list_runs(
+            project_name=project,
+            execution_order=1,        # root runs only
+            limit=1,                  # most recent
+        ))
+        if runs and runs[0].total_tokens:
+            return runs[0].total_tokens
+        return 0
     except Exception:
         return 0
 

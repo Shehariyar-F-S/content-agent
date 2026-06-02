@@ -10,6 +10,7 @@ Make sure the FastAPI backend is running first:
     uvicorn src.api:app --reload
 """
 
+import time as _time
 import httpx
 import streamlit as st
 import re
@@ -94,6 +95,9 @@ if run and title:
             st.error(f"Pipeline error: {exc}")
             st.stop()
 
+    # Store data in session state so refresh button can access it
+    st.session_state["last_run_data"] = data
+
     # Pipeline metadata
     st.success(
         f"Run complete in {data['latency_seconds']}s  ·  "
@@ -131,6 +135,25 @@ if run and title:
 
         if ev["low_confidence_agents"]:
             st.info(f"Low confidence: {', '.join(ev['low_confidence_agents'])}")
+
+        # Real token count from LangSmith — fetched after pipeline completes
+        _, col_btn = st.columns([3, 1])
+        with col_btn:
+            if st.button("🔄 Real tokens from LangSmith"):
+                _time.sleep(3)  # give LangSmith time to flush the trace
+                try:
+                    tok_resp = httpx.get(
+                        f"{API_URL}/run/{data['run_id']}/tokens",
+                        timeout=10.0,
+                    )
+                    if tok_resp.status_code == 200:
+                        t = tok_resp.json()
+                        if t.get("tokens"):
+                            st.success(f"Real tokens: {t['tokens']} (source: LangSmith)")
+                        else:
+                            st.warning("Trace not flushed yet — wait a moment and try again.")
+                except Exception:
+                    st.warning("Could not reach LangSmith endpoint.")
 
     st.divider()
 
@@ -209,5 +232,8 @@ if run and title:
         else:
             st.warning("Generation data unavailable.")
 
+# ---------------------------------------------------------------------------
+# Footer
+# ---------------------------------------------------------------------------
 st.divider()
 st.caption("© 2026 Shehariyar Firdous Shaikh — Content Intelligence Agent")

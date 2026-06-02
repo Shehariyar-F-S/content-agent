@@ -231,3 +231,22 @@ def analyse(request: AnalyseRequest):
         generation=generation,
         evaluation=evaluation,
     )
+
+@app.get("/run/{run_id}/tokens")
+def get_run_tokens(run_id: str):
+    """Fetch real token count from LangSmith after run completes."""
+    try:
+        from langsmith import Client
+        client = Client()
+        import os
+        project = os.getenv("LANGCHAIN_PROJECT", "content-agent")
+        runs = list(client.list_runs(
+            project_name=project,
+            execution_order=1,
+            limit=1,
+        ))
+        if runs and runs[0].total_tokens:
+            return {"tokens": runs[0].total_tokens, "source": "langsmith"}
+        return {"tokens": None, "source": "unavailable"}
+    except Exception as e:
+        return {"tokens": None, "source": "error", "detail": str(e)}
