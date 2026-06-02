@@ -10,7 +10,6 @@ Make sure the FastAPI backend is running first:
     uvicorn src.api:app --reload
 """
 
-import time as _time
 import httpx
 import streamlit as st
 import re
@@ -121,8 +120,8 @@ if run and title:
         m1.metric("Overall confidence", f"{ev['overall_confidence']:.0%}")
         m2.metric("Hallucination flags", len(ev["hallucination_flags"]))
         m3.metric("Low confidence agents", len(ev["low_confidence_agents"]))
-        token_display = ev["total_tokens_used"] if ev["total_tokens_used"] else "—"
-        m4.metric("Tokens used", token_display)
+        m4.metric("Tokens used", ev["total_tokens_used"] if ev["total_tokens_used"] else "—")
+
         if ev["hallucination_flags"]:
             for flag in ev["hallucination_flags"]:
                 if "recognisable title" in flag:
@@ -136,24 +135,7 @@ if run and title:
         if ev["low_confidence_agents"]:
             st.info(f"Low confidence: {', '.join(ev['low_confidence_agents'])}")
 
-        # Real token count from LangSmith — fetched after pipeline completes
-        _, col_btn = st.columns([3, 1])
-        with col_btn:
-            if st.button("🔄 Real tokens from LangSmith"):
-                _time.sleep(3)  # give LangSmith time to flush the trace
-                try:
-                    tok_resp = httpx.get(
-                        f"{API_URL}/run/{data['run_id']}/tokens",
-                        timeout=10.0,
-                    )
-                    if tok_resp.status_code == 200:
-                        t = tok_resp.json()
-                        if t.get("tokens"):
-                            st.success(f"Real tokens: {t['tokens']} (source: LangSmith)")
-                        else:
-                            st.warning("Trace not flushed yet — wait a moment and try again.")
-                except Exception:
-                    st.warning("Could not reach LangSmith endpoint.")
+
 
     st.divider()
 
