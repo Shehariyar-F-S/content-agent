@@ -2,7 +2,7 @@
 title: Content Intelligence Agent API
 emoji: 🎬
 colorFrom: purple
-colorTo: teal
+colorTo: blue
 sdk: docker
 pinned: false
 ---
