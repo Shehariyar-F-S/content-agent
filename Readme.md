@@ -1,3 +1,40 @@
+---
+title: Content Intelligence Agent API
+emoji: 🎬
+colorFrom: purple
+colorTo: teal
+sdk: docker
+pinned: false
+---
+
+# Content Intelligence Agent — API
+
+FastAPI backend for the Content Intelligence Agent pipeline.
+
+Five specialised LangGraph agents — enrichment, analysis, sentiment, generation, evaluation — with confidence scoring and hallucination detection.
+
+## Endpoints
+
+- `POST /analyse` — run the full pipeline for a given title
+- `GET /health` — health check
+- `GET /docs` — auto-generated Swagger documentation
+
+## Usage
+
+```bash
+curl -X POST https://shehariyar-f-s-content-agent-api.hf.space/analyse \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Stranger Things"}'
+```
+
+## Live UI
+
+The Streamlit frontend is available at the companion Space.
+
+## Code
+
+[github.com/Shehariyar-F-S/content-agent](https://github.com/Shehariyar-F-S/content-agent)
+
 # 🎬 Content Intelligence Agent
 
 <p align="center">

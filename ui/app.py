@@ -1,21 +1,20 @@
 """
-ui/app.py — Streamlit frontend.
+app.py — Streamlit frontend for HuggingFace Spaces.
 
-Calls the FastAPI backend and displays results in a clean,
-interview-ready UI. Run with:
-
-    streamlit run ui/app.py
-
-Make sure the FastAPI backend is running first:
-    uvicorn src.api:app --reload
+HuggingFace Spaces expects the main app file at root level named app.py.
+API_URL points to the companion HF Space running the FastAPI backend.
 """
 
 import httpx
+import os
 import streamlit as st
 import re
 
-#API_URL = "http://localhost:8000"
-API_URL = "https://content-agent-production-b165.up.railway.app"
+# HuggingFace Spaces API URL — update this after deploying the API Space
+API_URL = os.environ.get(
+    "API_URL",
+    "https://shehariyar-f-s-content-agent-api.hf.space"
+).rstrip("/")
 
 st.set_page_config(
     page_title="Content Intelligence Agent",
@@ -87,17 +86,15 @@ if run and title:
         except httpx.ConnectError:
             st.error(
                 "Cannot connect to the API. "
-                "Make sure the backend is running: `uvicorn src.api:app --reload`"
+                "The backend Space may be starting up — please try again in 30 seconds."
             )
             st.stop()
         except Exception as exc:
             st.error(f"Pipeline error: {exc}")
             st.stop()
 
-    # Store data in session state so refresh button can access it
     st.session_state["last_run_data"] = data
 
-    # Pipeline metadata
     st.success(
         f"Run complete in {data['latency_seconds']}s  ·  "
         f"Agents: {', '.join(data['completed_agents'])}  ·  "
@@ -111,7 +108,7 @@ if run and title:
     st.divider()
 
     # ---------------------------------------------------------------------------
-    # Evaluation summary — shown first, most important
+    # Evaluation summary
     # ---------------------------------------------------------------------------
     ev = data.get("evaluation")
     if ev:
@@ -135,8 +132,6 @@ if run and title:
         if ev["low_confidence_agents"]:
             st.info(f"Low confidence: {', '.join(ev['low_confidence_agents'])}")
 
-
-
     st.divider()
 
     # ---------------------------------------------------------------------------
@@ -145,7 +140,6 @@ if run and title:
     col_e, col_a = st.columns(2)
     col_s, col_g = st.columns(2)
 
-    # Enrichment
     with col_e:
         st.subheader("Enrichment")
         e = data.get("enrichment")
@@ -157,7 +151,6 @@ if run and title:
         else:
             st.warning("Enrichment data unavailable.")
 
-    # Analysis
     with col_a:
         st.subheader("Analysis")
         a = data.get("analysis")
@@ -175,7 +168,6 @@ if run and title:
         else:
             st.warning("Analysis data unavailable.")
 
-    # Sentiment
     with col_s:
         st.subheader("Sentiment")
         s = data.get("sentiment")
@@ -191,7 +183,6 @@ if run and title:
         else:
             st.warning("Sentiment data unavailable.")
 
-    # Generation
     with col_g:
         st.subheader("Generated copy")
         g = data.get("generation")
@@ -204,12 +195,7 @@ if run and title:
             st.markdown("**Instagram post**")
             st.text_area("Instagram post", g["instagram_post"], height=100, label_visibility="collapsed")
             st.markdown("**Twitter / X post**")
-            st.text_area(
-                "Twitter post",
-                g["twitter_post"],
-                height=80,
-                label_visibility="collapsed",
-            )
+            st.text_area("Twitter post", g["twitter_post"], height=80, label_visibility="collapsed")
             st.caption(f"{len(g['twitter_post'])} / 280 chars")
         else:
             st.warning("Generation data unavailable.")
