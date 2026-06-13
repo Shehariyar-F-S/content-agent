@@ -13,7 +13,7 @@ import re
 # HuggingFace Spaces API URL — update this after deploying the API Space
 API_URL = os.environ.get(
     "API_URL",
-    "https://shehariyar-f-s-content-agent-api.hf.space"
+    "https://sher29-content-agent-api.hf.space"
 ).rstrip("/")
 
 st.set_page_config(
